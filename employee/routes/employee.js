@@ -11,8 +11,8 @@ router.use(express.json());
 // Route to store user details
 router.post('/register', async (req, res) => {
   try {
-    const { email, location, firstName, lastName, gender, contactNo, salary } = req.body;
-    const newUser = new User({ email, location, firstName, lastName, gender, contactNo, salary });
+    const { email, location, weatherData } = req.body; 
+    const newUser = new User({ email, location, weatherData });
     await newUser.save();
     res.status(201).json({ success: true, user: newUser });
   } catch (error) {
@@ -60,8 +60,5 @@ router.get('/weather-data/:email/:date', async (req, res) => {
     res.status(400).json({ success: false, error: error.message });
   }
 });
-
-
-
 
 module.exports = router;
