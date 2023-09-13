@@ -1,33 +1,23 @@
 const mongoose = require('mongoose');
 
-const EmployeeSchema = new mongoose.Schema({
-    firstName: {
-        type: String,
-        
+const userSchema = new mongoose.Schema({
+  email: {
+    type: String,
+    required: true,
+    unique: true,
+  },
+  location: {
+    type: String,
+    required: true,
+  },
+  weatherData: [
+    {
+      date: Date,
+      temperature: Number,
+     
     },
-    lastName: {
-        type: String,
-        
-    },
-    email: {
-        type: String,
-       
-    },
-    gender: {
-        type: String,
-       
-    },
-    contactNo: {
-        type: Number,
-       
-    },
-    salary:{
-        type: Number,
-    }
+  ],
 
-    
 });
 
-
-
-module.exports = mongoose.model('Emp', EmployeeSchema);
+module.exports = mongoose.model('codescale', userSchema);

@@ -1,115 +1,66 @@
 const express = require('express');
-const employee = require('../models/employee');
+const User = require('../models/employee'); 
+const axios = require('axios');
+const nodemailer = require('nodemailer');
+const cron = require('node-cron');
 const router = express.Router();
 
-router.post('/login', (req, res) => {
-  const { NIC, password } = req.body;
+// Middleware for parsing JSON request bodies
+router.use(express.json());
 
-  // Find employee by NIC and password
-  employee.findOne({ NIC, password }, (err, foundEmployee) => {
-    if (err) {
-      return res.status(400).json({
-        success: false,
-        error: err
-      });
+// Route to store user details
+router.post('/register', async (req, res) => {
+  try {
+    const { email, location, firstName, lastName, gender, contactNo, salary } = req.body;
+    const newUser = new User({ email, location, firstName, lastName, gender, contactNo, salary });
+    await newUser.save();
+    res.status(201).json({ success: true, user: newUser });
+  } catch (error) {
+    res.status(400).json({ success: false, error: error.message });
+  }
+});
+
+// Route to update user location
+router.put('/update-location/:id', async (req, res) => {
+  try {
+    const userId = req.params.id;
+    const { location } = req.body;
+    const updatedUser = await User.findByIdAndUpdate(userId, { location }, { new: true });
+    if (!updatedUser) {
+      return res.status(404).json({ success: false, error: 'User not found' });
+    }
+    res.status(200).json({ success: true, user: updatedUser });
+  } catch (error) {
+    res.status(400).json({ success: false, error: error.message });
+  }
+});
+
+// Route to get user's weather data for a given day
+router.get('/weather-data/:email/:date', async (req, res) => {
+  try {
+    const email = req.params.email;
+    const date = new Date(req.params.date);
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ success: false, error: 'User not found' });
     }
 
-    if (!foundEmployee) {
-      return res.status(400).json({
-        success: false,
-        error: "Invalid NIC or password"
-      });
+    // Search for weather data for the specified date
+    const weatherData = user.weatherData.find((data) => {
+      return data.date.toDateString() === date.toDateString();
+    });
+
+    if (!weatherData) {
+      return res.status(404).json({ success: false, error: 'Weather data not found for the date' });
     }
 
-    return res.status(200).json({
-      success: true,
-      employee: foundEmployee
-    });
-  });
+    res.status(200).json({ success: true, weatherData });
+  } catch (error) {
+    res.status(400).json({ success: false, error: error.message });
+  }
 });
 
-
-//save post
-router.post('/post', (req, res) => {
-    let emp = new employee(req.body);
-    emp.save((err) => {
-        if (err) {
-            return res.status(400).json({
-                error: err
-            });
-        }
-        return res.status(200).json({
-            success: emp
-        });
-    });
-});
-
-
-//get all post
-router.get('/posts', (req, res) => {
-    employee.find().exec((err, employee) => {
-        if (err) {
-            return res.status(400).json({
-                error: err
-            });
-        }
-        return res.status(200).json({
-            success: true,
-            existingPosts: employee
-        });
-    });
-});
-
-//update post
-
-router.put('/post/:id', (req, res) => {
-    employee.findByIdAndUpdate(   
-        req.params.id,
-        {
-            $set: req.body
-        },
-        (err, post) => {
-            if (err) {
-                return res.status(400).json({ error: err });
-            }
-            return res.status(200).json({
-                success: "Updated successfully"
-            });
-        }
-    );
-});
-
-
-//delete post
-
-router.delete('/post/:id', (req, res) => {
-    employee.findByIdAndRemove(req.params.id).exec((err, deletedPost) => {
-        if (err) return res.status(400).json({
-            message: "Delete unsuccessful", err
-        });
-        return res.json({
-            message: "Delete successful", deletedPost
-        });
-    });
-});
-
-//get specific post
-
-router.get("/post/:id", (req, res) => {
-    let postId = req.params.id;
-    employee.findById(postId , (err, post) => {
-            if (err) {
-                return res.status(400).json({ success: false, err })
-            }
-            return res.status(200).json({
-                success: true,
-                post
-            });
-        });
-});
-
-
-
-
+// Add your code for sending hourly weather reports here using cron and Nodemailer
 
 module.exports = router;
