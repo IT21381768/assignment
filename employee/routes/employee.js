@@ -61,6 +61,7 @@ router.get('/weather-data/:email/:date', async (req, res) => {
   }
 });
 
-// Add your code for sending hourly weather reports here using cron and Nodemailer
+
+
 
 module.exports = router;
